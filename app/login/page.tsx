@@ -1,8 +1,43 @@
 // src/app/login/page.tsx
 "use client";
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
+    const router = useRouter();
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMessage('');
+
+        try {
+            const res = await fetch('http://localhost/api/login.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                localStorage.setItem('userEmail', email); // Save user email to browser memory
+                setMessage('Login successful! Redirecting...');
+                setTimeout(() => window.location.href = '/', 1500);
+            } else {
+                setMessage(data.message);
+            } 
+        } catch (error) {
+                setMessage('An error occurred. Cant connect to PHP.');
+            }
+        };
+
     return (
         <main className="flex min-h-screen items-center justify-center px-4">
             <motion.div 
@@ -11,16 +46,21 @@ export default function LoginPage() {
                 className="w-full max-w-md p-8 rounded-2xl bg-white/5 border-white/10 backdrop-blur-xl shadow-2xl"
                 >
                     <h2 className="text-3xl font-bold mb-6 text-center">Login</h2>
-                    <form className="space-y-4">
+                    <form onSubmit={handleLogin} className="space-y-4">
                         <div>
                             <label className="block text-sm text-gray-400 mb-1">Email</label>
-                            <input type="email" className="w-full p-3 rounded-lg bg-black/50 border border-white/10 focus:border-blue-500 outline-none transition-all" />
+                            <input type="email" required onChange={(e) => setEmail(e.target.value)} className="w-full p-3 rounded-lg bg-black/50 border border-white/10 focus:border-blue-500 outline-none transition-all" />
                         </div>
                         <div>
                             <label className="block text-sm text-gray-400 mb-1">Password</label>
-                            <input type="password" className="w-full p-3 rounded-lg bg-black/50 border border-white/10 focus:border-blue-500 outline-none transition-all" />
+                            <input type="password" required onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded-lg bg-black/50 border border-white/10 focus:border-blue-500 outline-none transition-all" />
                         </div>
-                        <button className="w-full py-3 bg-blue-600 rounded-lg text-white font-semibold hover:bg-blue-500 transition-all">
+                     
+                        {message && (
+                            <p className={`text-sm text-center ${message.includes('Success') ? 'text-green-400' : 'text-red-400'}`}>{message}</p>
+                        )}
+
+                        <button type="submit" className="w-full py-3 bg-blue-600 rounded-lg text-white font-semibold hover:bg-blue-500 transition-all">
                             Sign In
                         </button>
                     </form>
